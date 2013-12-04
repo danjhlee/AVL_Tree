@@ -4,22 +4,22 @@
 /*
  * data structure of AVL tree
  */
-typedef struct node
+typedef struct tree
 {
     int key;
-    struct node *left;
-    struct node *right;
+    struct tree *left;
+    struct tree *right;
     int height;
-} node;
+} tree;
 
 /*
  * return height of a node
  */
-int height(node *n)
+int height(tree *node)
 {
-    if (n == NULL)
+    if (node == NULL)
         return 0;
-    return n->height;
+    return node->height;
 }
 
 /*
@@ -33,9 +33,9 @@ int max(int a, int b)
 /*
  * create a new node and return its pointer
  */
-node *new_node(int key)
+tree *new_node(int key)
 {
-    node *new_node = (node *)calloc(1, sizeof(node));
+    tree *new_node = (tree *)calloc(1, sizeof(tree));
 
     new_node->key = key;
     new_node->left = NULL;
@@ -48,10 +48,10 @@ node *new_node(int key)
 /*
  * right rotate subtree rooted with y
  */
-node *right_rotate(node *y)
+tree *right_rotate(tree *y)
 {
-    node *x = y->left;
-    node *T2 = x->right;
+    tree *x = y->left;
+    tree *T2 = x->right;
 
     /* rotation */
     x->right = y;
@@ -67,10 +67,10 @@ node *right_rotate(node *y)
 /*
  * left rotate subtree rooted with x
  */
-node *left_rotate(node *x)
+tree *left_rotate(tree *x)
 {
-    node *y = x->right;
-    node *T2 = y->left;
+    tree *y = x->right;
+    tree *T2 = y->left;
 
     /* rotation */
     y->left = x;
@@ -86,17 +86,17 @@ node *left_rotate(node *x)
 /*
  * get the difference between height of left subtree and height of right subtree
  */
-int get_balance(node *n)
+int get_balance(tree *node)
 {
-    if (n == NULL)
+    if (node == NULL)
         return 0;
-    return height(n->left) - height(n->right);
+    return height(node->left) - height(node->right);
 }
 
 /*
  * insert a node, caculate the balance of the node and rotate a tree to make it balanced
  */
-node *node_insert(node *node, int key)
+tree *node_insert(tree *node, int key)
 {
     int balance;
 
@@ -131,10 +131,77 @@ node *node_insert(node *node, int key)
     return node;
 }
 
+
+tree *find_minimum(tree *node)
+{
+    tree *min;
+
+    min = node;
+    while (min->left != NULL)
+        min = min->left;
+
+    return min;
+}
+
+tree *node_delete(tree *node, int key)
+{
+    int balance;
+    tree *temp = NULL;
+
+    if (node == NULL)
+        return node;
+    if (key < node->key)
+        node->left = node_delete(node->left, key);
+    else if (key > node->key)
+        node->right = node_delete(node->right, key);
+    else if (key == node->key) {
+        /* no child */
+        if (node->left == NULL && node->right == NULL) {
+            temp = node;
+            node = NULL;
+            free (temp);
+        }
+        /* one child */
+        else if (node->left == NULL || node->right == NULL) {
+            temp = node->left ? node->left : node->right;
+            *node = *temp;
+            free (temp);
+        }
+        /* two children */
+        else if (node->left && node->right) {
+            temp = find_minimum(node->right);
+            node->key = temp->key;
+            node->right = node_delete(node->right, temp->key);
+        }
+    }
+
+    if (node == NULL)
+        return node;
+    node->height = max(height(node->left), height(node->right)) + 1;
+    balance = get_balance(node);
+
+    /* Left Left */
+    if (balance > 1 && get_balance(node->left) >= 0)
+        return right_rotate(node);
+    /* Left Right */
+    if (balance > 1 && get_balance(node->left) < 0) {
+        node->left = left_rotate(node->left);
+        return right_rotate(node);
+    }
+    if (balance < -1 && get_balance(node->right) <= 0)
+        return left_rotate(node);
+    if (balance < -1 && get_balance(node->right) > 0) {
+        node->right = right_rotate(node->right);
+        return left_rotate(node);
+    }
+
+    return node;
+}
+
 /*
  * print items of a tree
  */
-void print_tree(node *node)
+void print_tree(tree *node)
 {
     if (node) {
         print_tree(node->left);
@@ -146,7 +213,7 @@ void print_tree(node *node)
 
 int main()
 {
-    node *root = NULL;
+    tree *root = NULL;
 
     root = node_insert(root, 1);
     root = node_insert(root, 2);
