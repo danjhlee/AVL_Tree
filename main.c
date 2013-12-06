@@ -222,7 +222,10 @@ int main()
     root = node_insert(root, 7);
     root = node_insert(root, 5);
     root = node_insert(root, 3);
-
+    print_tree(root);
+    printf("\n");
+    
+    root = node_delete(root, 6);
     print_tree(root);
 
     return 0;
